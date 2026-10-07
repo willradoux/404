@@ -4,6 +4,20 @@ Página de erro 404 em um cenário ártico que muda com o horário do computador
 
 HTML, CSS e JavaScript puros, num único `index.html`, sem dependências nem build.
 
+**Ao vivo:** https://404-sigma-six.vercel.app
+
+![Noite com aurora boreal](docs/noite-desktop.webp)
+
+| Dia | Pôr do sol |
+| --- | --- |
+| ![Dia](docs/dia-desktop.webp) | ![Pôr do sol](docs/por-do-sol-desktop.webp) |
+
+### No celular
+
+| Dia | Pôr do sol | Noite |
+| --- | --- | --- |
+| <img src="docs/dia-mobile.webp" alt="Dia no celular" width="240"> | <img src="docs/por-do-sol-mobile.webp" alt="Pôr do sol no celular" width="240"> | <img src="docs/noite-mobile.webp" alt="Noite no celular" width="240"> |
+
 ## Rodar
 
 Sirva a pasta com qualquer servidor estático:
@@ -24,7 +38,7 @@ A cena segue o relógio local, com transições suaves:
 | Pôr do sol | amanhecer (5h45 – 6h45) e fim de tarde (17h30 – 19h) |
 | Dia | 7h45 – 16h30 |
 
-Para revisar outra cena, use `?hora=`: `?hora=22`, `?hora=18`, `?hora=12`.
+Para revisar outra cena, use `?hora=`: [noite](https://404-sigma-six.vercel.app/?hora=22), [pôr do sol](https://404-sigma-six.vercel.app/?hora=18), [dia](https://404-sigma-six.vercel.app/?hora=12).
 
 ## Efeitos
 
