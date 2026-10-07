@@ -19,6 +19,15 @@
 <meta property="og:image:alt" content="Um 404 de vidro fosco sobre uma paisagem ártica com aurora boreal e um urso polar">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://404-sigma-six.vercel.app/og.jpg">
+<script>
+  // cor de fundo da cena do horário já no primeiro quadro (antes da prévia e da foto)
+  (function () {
+    var q = parseFloat(new URLSearchParams(location.search).get('hora')), d = new Date();
+    var h = isNaN(q) ? d.getHours() + d.getMinutes() / 60 : ((q % 24) + 24) % 24;
+    var c = h < 5.25 || h >= 19.5 ? '#164C65' : h >= 7.25 && h < 17 ? '#95A8C2' : '#A07770';
+    document.documentElement.style.background = c;
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Inter+Tight:wght@500;700&display=swap" rel="stylesheet">
@@ -39,7 +48,21 @@
 
 * { box-sizing: border-box; }
 html, body { height: 100%; }
-body { margin: 0; min-height: 100dvh; overflow: hidden; background: #0B1330; -webkit-font-smoothing: antialiased; }
+body { margin: 0; min-height: 100dvh; overflow: hidden; background: #164C65; -webkit-font-smoothing: antialiased; }
+
+/* ---------- Abertura ----------
+   Uma prévia minúscula e desfocada aparece na hora; a cena nítida, o 404 e a
+   frase só surgem quando a foto já foi decodificada e a fonte carregou. */
+.lqip {
+  position: fixed; inset: -40px; z-index: 0; pointer-events: none;
+  background-size: cover; background-position: center;
+  filter: blur(22px) saturate(1.15);
+}
+.world { opacity: 0; }
+.ready .world { opacity: 1; transition: opacity 1.1s var(--ease-out); }
+.frost, .glyphs, .phrase { opacity: 0; }
+.ready .frost, .ready .glyphs { opacity: 1; animation: enter 1400ms var(--ease-out) 250ms both; }
+.ready .phrase { opacity: 1; animation: enter 1400ms var(--ease-out) 650ms both; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* ---------- Cenas ---------- */
@@ -49,7 +72,8 @@ body { margin: 0; min-height: 100dvh; overflow: hidden; background: #0B1330; -we
   animation: kenburns 60s ease-in-out infinite alternate;
 }
 @keyframes kenburns { to { transform: scale(1.02) translate(-.3%, -.15%); } }
-.scene { position: absolute; inset: 0; opacity: 0; transition: opacity 3s var(--ease-out); }
+.scene { position: absolute; inset: 0; opacity: 0; }
+.ready .scene { transition: opacity 3s var(--ease-out); }
 .pl {
   position: absolute; left: var(--fx); top: var(--fy); width: var(--fw); height: var(--fh);
   background-size: 100% 100%; will-change: transform;
@@ -114,12 +138,10 @@ body { margin: 0; min-height: 100dvh; overflow: hidden; background: #0B1330; -we
   backdrop-filter: blur(34px) saturate(1.9) brightness(1.1);
   -webkit-backdrop-filter: blur(34px) saturate(1.9) brightness(1.1);
   clip-path: url(#clip404);
-  animation: enter 1400ms var(--ease-out) 200ms both;
 }
 /* Tom branco suave e sombra do vidro */
 .glyphs {
   position: fixed; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: visible;
-  animation: enter 1400ms var(--ease-out) 200ms both;
 }
 .glyphs text, #clip404 text { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.05em; }
 @keyframes enter { from { opacity: 0; translate: 0 24px; } }
@@ -130,7 +152,6 @@ body { margin: 0; min-height: 100dvh; overflow: hidden; background: #0B1330; -we
   font: 500 clamp(20px, 2.6vw, 34px)/1.2 var(--font-display); letter-spacing: -0.02em;
   color: var(--ink); text-shadow: var(--ink-shadow);
   transition: color 1.5s;
-  animation: enter 1400ms var(--ease-out) 600ms both;
 }
 
 canvas#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
@@ -148,6 +169,7 @@ canvas#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events
   </clipPath>
 </svg>
 
+<div class="lqip" id="lqip" aria-hidden="true"></div>
 <div class="world" id="world" aria-hidden="true">
   <div class="scene" data-s="dia">
     <div class="pl ground"></div>
@@ -240,8 +262,21 @@ canvas#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events
     layout();
   }
 
+  /* ---------- Carregamento ---------- */
+  // Prévias de ~100 bytes (32 px) de cada cena e formato, e a cor média de cada cena
+  const LQIP = {"dia-16x9":"data:image/webp;base64,UklGRsgAAABXRUJQVlA4ILwAAACwBQCdASogABIAPrVKnEmnJCKhMBgMAOAWiUATpmaHMgLAPiqTmnuSfOBxysqR+IjbjvhhYYAA/uuPmDbOTQt1pTWQBmUSyWF1M1jeU65Nf8E0Gt4iOGwlsdkRKGWfdfkaAxUVxLA+iAlYpk3WvQsVMzATu3ZFXJdwNb9pM4E/zztlFkH3+eo7fblbQ9ljOcACBX0cQ77gmXAbh0iyQ7jj76zmuOuFulK/nFmzHAoFyZitzEal0u91c0AAAA==","dia-9x16":"data:image/webp;base64,UklGRuQAAABXRUJQVlA4INgAAAAQBgCdASoSACAAPrVKnUmnJCKhMAgA4BaJYgC7MzQ1xf/gNmtOdpyMMrA7FNvFNitfHHWBGt1SG4AA+Wm7VRFPIS85yNcn9dTohdiR6tvbvN21yQZkm3l1R4qWdDw/7bW1v4Ik5+Au1X7g0g3pN7+xZXKXJsfYhi3A/xeYVAsQnDSSYm4qNw61zO9KoMDiukr8uAaNun/uJ0/Ou8RKthKmK9gf88h8TRPRITVQZFxMJa1F+te3bsVbxc/9Cc2+KOPmODk+HpResBa7wHkTUxi3nlVsjX8QAAA=","dia-4x3":"data:image/webp;base64,UklGRv4AAABXRUJQVlA4IPIAAADwBQCdASogABgAPrVUpE0nJKOiKAgA4BaJZgCdMuu1RCiBtX+JQnsfQZae6yz76i5WwNltYkvR4AD+x4KY/1qzsK8BWaZSJP5viOpSPcMuUrPTk5xv3t9uuyidk20U17zioNCb0b9hER01SUfKDM3NEDoL4yfw6b7amQF6mi7RVzfR1v4YmIKEHUJSMFdZc7FFQazsCYLtAkJPjZo2f751/jeJkoHix6KdK+a8PF3WUgKVWMY6tM7qi/5ITqhzYdoD1ppssq9fn541ib2jXUvhJYDvV88OL4Acdh3FUfUi+VTRPJNtiYQ88HQPyC3vmFAAAA==","por-do-sol-16x9":"data:image/webp;base64,UklGRtgAAABXRUJQVlA4IMwAAAAQBgCdASogABIAPq1Gm0mmJCKhMAwAwBWJaACdMoSCv0q4ABhGkotDecGdIXbXT5JIBwj7GuAX3AAA/sXltQI37scyvxNtBepAdKgyWae9UmU2GtPcPHuIxvV5n3JwLRX+aGMKHTjCyhJ9pnu6XazmNe1H3aUyhbwwpD7IECODqKS8DqARywkpsYX0b93RoZj7++FqdceARYugHrO+Oc8xzwo1ol+7tZGYOkX23bkt80WxNxwGlPl/KYyRUjrtR14JnijBC9jqViWUAAA=","por-do-sol-9x16":"data:image/webp;base64,UklGRuoAAABXRUJQVlA4IN4AAADQBgCdASoSACAAPrVQnUqnJSKhsBgIAOAWiWwAnTKEcCcZuinpPP/gWwqzmKo/Xshp9dO2so4HvzU8yot/u5gA/kTUgO5d8yDpkya1dxNzAO0h4gOeuRFd/Und0/ErVFu7P5jTPCk3khtqLnujFzo+MaHIHdQpuSJBtpgQI6fewWBhSkJfVVPqxhMe3794HwL0Znq2NIwfjnMPrD4RFsIZkwl0FvEO3KVywPBIPp/LA6qTZUI5qPVVJsY05gvHonUCJkXnpRVFhKltCEyMAvjsJDQKgQMM0G4nSKiwAAA=","por-do-sol-4x3":"data:image/webp;base64,UklGRhIBAABXRUJQVlA4IAYBAACwBgCdASogABgAPqlEnEmmI6MhMAwAwBUJbACdMoR6eNO50KXiZAFvOxuBuSwkt2ueVsCzuFbN+Vf5Lae5oADN4sX/3lBjrrr6Bt1m1Ld5ABHHZl4sDVUe52Tk1mNXack+ZxeJP3m9FjVM/yXkANLeblPyXEclgb9TlaDIvD3c0Z0FetiDCFujq663PyU8PKQQeF6q/jwPZ6ZUxNOjJMPjhAgXIn+0ioYUWOL2y9fhzVVqkcTVrlGdS21uqLS0hsMZiJ4Xk6BnB7TxlElx0uqQ1WHYjTer75q7KD9KFr1PAMfMUpqun1Js1axbp/JDDTTZpoTcuUAAQjw2HmmKnbBQ6sFkPWAA","noite-16x9":"data:image/webp;base64,UklGRsYAAABXRUJQVlA4ILoAAABwBQCdASogABIAPrVGnEmnI6KhMAgA4BaJQBOgBDwLIoUAIwTMUjWDnbz7yy2Kig0ewmoAAP72kcCpthc0uJsDVBvL/vdmUIurEmaeRo1YL3hsoGvBno4ZQEfmmpU35nmODEFmEIyzuHuqB3pVwh6HeV4K1QIWFvzu+c+7H9rLyJLgkKOaJM6Fv5PQs1ZvvRcMo14m164e58aos9FpN2U/RghqivSnawzJp5m+71ae1KfHAVt5MicXAAA=","noite-9x16":"data:image/webp;base64,UklGRtwAAABXRUJQVlA4INAAAABQBQCdASoSACAAPrVIoEunI6MhsBgIAOAWiWgAtOg0banjiflU7AHRIAYyZhN0fABXy4AA/vkXD2OpH6BANaJOf8lTeWrSXv5pINkm8rQBhjqlcXdNZWFsoHSDlWk0k3P2N75XtFukmAejd9EaqD5JTflmNCMdHaF53NmhSSW0U9tzdHeJj6Ol6yiReKUvs+OPDSNJj3DVx+IFuGpYYhc+bYBNNCwb2wsmrlQWf4sVoYcWJGehSmrFqzG3zwE6nDVHqmHJaEURKAbZvaCwEAAA","noite-4x3":"data:image/webp;base64,UklGRvoAAABXRUJQVlA4IO4AAABQBgCdASogABgAPrVMnksnJCKhsBgIAOAWiWYAnTOPeG8UTdFGQsH7op//04cXhjN2BOhUKBDs+JU0iAD++cjcsbgbPJSmjlN62BymHpyifjV641E4DkW2zBvPUasVV6vcAfa0sHqfCgpvMeyKKWMJoKs5t5rl/U81Z4qNEexeB+MfszvhBGXPn3tkK8Eo+kEw8eaeONeyNQqwpr5moS0P/+ugDhOxJchX+vchyjUA5DmafQRxErYKrSDNL8jhBMMG0z1Fa1dT/Rie7AA6juK6M0Q8S+rZgp/LWr4e/3w3IPlManbjucUovV4ogAAA"};
+  const BOOT = { 'dia': '#95A8C2', 'por-do-sol': '#A07770', 'noite': '#164C65' };
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  // decodifica fora da thread principal antes de usar, para a página não engasgar
+  const imgCache = {};
+  const loadImg = url => imgCache[url] ||= new Promise(res => {
+    const img = new Image(); img.src = url;
+    img.decode().then(() => res(img), () => res(img));
+  });
+  let pending = [];
+
   /* ---------- Layout ---------- */
-  let preloadAll = false; // as outras cenas carregam depois da primeira
+  let preloadAll = false; // as outras cenas carregam depois da abertura
   let W = 0, H = 0, ratio = '16x9', box = { x: 0, y: 0, w: 0, h: 0 }, hzPx = 0;
   const OVERSCAN = 1.03; // sobra mínima para a paralaxe não mostrar bordas
   const texts = [...document.querySelectorAll('.t404')];
@@ -260,7 +295,10 @@ canvas#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events
       if (sceneEl[s].dataset.ratio === r || (weight[s] < .001 && !preloadAll)) continue;
       const url = `assets/${s}-${r}.webp`;
       sceneEl[s].dataset.ratio = r;
-      sceneEl[s].querySelectorAll('.pl:not(.aurora-wrap)').forEach(el => { el.style.backgroundImage = `url("${url}")`; });
+      pending.push(loadImg(url).then(() => {
+        if (sceneEl[s].dataset.ratio !== r) return; // a tela mudou de formato enquanto carregava
+        sceneEl[s].querySelectorAll('.pl:not(.aurora-wrap)').forEach(el => { el.style.backgroundImage = `url("${url}")`; });
+      }));
       if (s === 'noite') loadAurora(`assets/${s}-${r}-aurora.webp`);
     }
     const ar = RATIOS[ratio];
@@ -506,11 +544,22 @@ canvas#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events
   /* ---------- Início ---------- */
   W = innerWidth; H = innerHeight;
   applyTime();
+  // prévia desfocada da cena principal, já no primeiro quadro
+  const main = SCENES.reduce((a, b) => weight[b] > weight[a] ? b : a);
+  const lqip = $('#lqip');
+  lqip.style.backgroundImage = `url("${LQIP[main + '-' + ratio]}")`;
+  document.body.style.background = BOOT[main];
   setInterval(applyTime, 30000);
   addEventListener('resize', layout);
-  document.fonts?.ready.then(layoutType); // remede quando a Inter Tight carregar
-  addEventListener('load', () => setTimeout(() => { preloadAll = true; layout(); }, 1500));
   start();
+
+  const fontReady = Promise.race([document.fonts.load("700 100px 'Inter Tight'"), wait(2500)]);
+  Promise.race([Promise.all([...pending, fontReady]), wait(6000)]).then(() => {
+    layoutType(); // mede o 404 já com a fonte certa
+    requestAnimationFrame(() => root.classList.add('ready'));
+    setTimeout(() => lqip.remove(), 1600);
+    setTimeout(() => { preloadAll = true; layout(); }, 2500);
+  });
 })();
 </script>
 </body>
