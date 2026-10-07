@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Página não encontrada</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Inter+Tight:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --font-display: 'Inter Tight', 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Caixa "cover" da imagem e paralaxe — calculadas pelo script */
+  --fx: 0px; --fy: 0px; --fw: 100vw; --fh: 100vh;
+  --sx: 0px; --sy: 0px; --gx: 0px; --gy: 0px;
+  --hzpx: 60vh;
+
+  --ink: #FFFFFF;
+  --ink-shadow: 0 1px 18px rgba(0, 10, 40, .35);
+}
+.light { --ink: #0F1C3A; --ink-shadow: 0 1px 18px rgba(255, 255, 255, .6); }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; min-height: 100dvh; overflow: hidden; background: #0B1330; -webkit-font-smoothing: antialiased; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ---------- Cenas ---------- */
+.world {
+  position: fixed; inset: 0; overflow: hidden;
+  transform-origin: 50% 60%;
+  animation: kenburns 60s ease-in-out infinite alternate;
+}
+@keyframes kenburns { to { transform: scale(1.02) translate(-.3%, -.15%); } }
+.scene { position: absolute; inset: 0; opacity: 0; transition: opacity 3s var(--ease-out); }
+.pl {
+  position: absolute; left: var(--fx); top: var(--fy); width: var(--fw); height: var(--fh);
+  background-size: 100% 100%; will-change: transform;
+}
+.ground { transform: translate3d(var(--gx), var(--gy), 0); }
+.sky {
+  transform: translate3d(var(--sx), var(--sy), 0);
+  /* o céu se move menos que o chão; a névoa do horizonte esconde a emenda */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(var(--hz) - 7%), transparent calc(var(--hz) + 1%));
+          mask-image: linear-gradient(to bottom, #000 calc(var(--hz) - 7%), transparent calc(var(--hz) + 1%));
+}
+
+/* Sol: brilho pulsando e raios girando devagar */
+.sun {
+  position: absolute; left: var(--sunx); top: var(--suny); width: 70vmax; aspect-ratio: 1; translate: -50% -50%;
+  border-radius: 50%; pointer-events: none; mix-blend-mode: screen;
+  background: radial-gradient(circle, rgba(255,252,240,.55) 0%, rgba(255,245,225,.18) 18%, transparent 48%);
+  animation: glow 7s ease-in-out infinite;
+}
+[data-s="por-do-sol"] .sun { background: radial-gradient(circle, rgba(255,214,150,.6) 0%, rgba(255,160,90,.2) 18%, transparent 48%); }
+.sun::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(255,255,255,.07) 0deg 2deg, transparent 2deg 11deg);
+  -webkit-mask-image: radial-gradient(circle, #000 6%, transparent 46%);
+          mask-image: radial-gradient(circle, #000 6%, transparent 46%);
+  animation: spin 160s linear infinite;
+}
+@keyframes glow { 50% { opacity: .7; scale: .94; } }
+@keyframes spin { to { rotate: 360deg; } }
+
+/* Aurora: cópia do céu noturno em canvas, ondulando em faixas (ver drawAurora) */
+.aurora-wrap {
+  overflow: hidden; pointer-events: none; mix-blend-mode: screen;
+  transform: translate3d(var(--sx), var(--sy), 0);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 calc(var(--hz) - 14%), transparent calc(var(--hz) - 4%));
+          mask-image: linear-gradient(to bottom, #000 0%, #000 calc(var(--hz) - 14%), transparent calc(var(--hz) - 4%));
+  animation: breathe 9s ease-in-out infinite;
+}
+.aurora { display: block; width: 100%; height: 100%; filter: saturate(1.35) brightness(1.15) blur(1px); }
+@keyframes breathe { 0%, 100% { opacity: .18; } 50% { opacity: .45; } }
+
+/* Neve soprada rente ao chão */
+.mist {
+  position: fixed; left: -20%; width: 140%; height: 22vh; top: calc(var(--hzpx) - 11vh);
+  pointer-events: none; mix-blend-mode: screen; opacity: .5;
+  transform: translate3d(var(--gx), var(--gy), 0);
+  background-image:
+    radial-gradient(40% 30% at 20% 55%, rgba(255,255,255,.35), transparent 70%),
+    radial-gradient(30% 25% at 55% 45%, rgba(255,255,255,.28), transparent 70%),
+    radial-gradient(35% 35% at 85% 60%, rgba(255,255,255,.3), transparent 70%);
+  background-size: 900px 100%; background-repeat: repeat-x;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 40%, #000 60%, transparent);
+          mask-image: linear-gradient(to bottom, transparent, #000 40%, #000 60%, transparent);
+  filter: blur(8px);
+}
+.night .mist { opacity: .28; }
+
+/* ---------- 404 de vidro ---------- */
+/* O vidro fosco: desfoca o que está atrás, recortado no formato do texto */
+.frost {
+  position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  backdrop-filter: blur(34px) saturate(1.9) brightness(1.1);
+  -webkit-backdrop-filter: blur(34px) saturate(1.9) brightness(1.1);
+  clip-path: url(#clip404);
+  animation: enter 1400ms var(--ease-out) 200ms both;
+}
+/* Tom branco suave e sombra do vidro */
+.glyphs {
+  position: fixed; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: visible;
+  animation: enter 1400ms var(--ease-out) 200ms both;
+}
+.glyphs text, #clip404 text { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.05em; }
+@keyframes enter { from { opacity: 0; translate: 0 24px; } }
+
+.phrase {
+  position: fixed; z-index: 3; left: 0; right: 0; top: var(--phrase-y, 70vh); margin: 0;
+  text-align: center; padding: 0 16px;
+  font: 500 clamp(20px, 2.6vw, 34px)/1.2 var(--font-display); letter-spacing: -0.02em;
+  color: var(--ink); text-shadow: var(--ink-shadow);
+  transition: color 1.5s;
+  animation: enter 1400ms var(--ease-out) 600ms both;
+}
+
+canvas#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: 1ms !important; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <clipPath id="clip404" clipPathUnits="userSpaceOnUse">
+    <text class="t404" text-anchor="middle">404</text>
+  </clipPath>
+</svg>
+
+<div class="world" id="world" aria-hidden="true">
+  <div class="scene" data-s="dia">
+    <div class="pl ground"></div>
+    <div class="pl sky"><span class="sun"></span></div>
+  </div>
+  <div class="scene" data-s="por-do-sol">
+    <div class="pl ground"></div>
+    <div class="pl sky"><span class="sun"></span></div>
+  </div>
+  <div class="scene" data-s="noite">
+    <div class="pl ground"></div>
+    <div class="pl sky"></div>
+    <div class="pl aurora-wrap"><canvas class="aurora" id="aurora"></canvas></div>
+  </div>
+  <div class="mist" id="mist"></div>
+</div>
+
+<div class="frost" aria-hidden="true"></div>
+<svg class="glyphs" id="glyphs" aria-hidden="true">
+  <defs>
+    <linearGradient id="fill404" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".2"/>
+      <stop offset=".6" stop-color="#fff" stop-opacity=".07"/>
+      <stop offset="1" stop-color="#fff" stop-opacity=".12"/>
+    </linearGradient>
+    <filter id="soft" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="24" stdDeviation="30" flood-color="#00103A" flood-opacity=".18"/>
+    </filter>
+  </defs>
+  <text class="t404" text-anchor="middle" fill="url(#fill404)" filter="url(#soft)">404</text>
+</svg>
+
+<main>
+  <h1 class="sr-only">Erro 404: página não encontrada</h1>
+  <p class="phrase" id="phrase">Acho que esfriou…</p>
+</main>
+
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = s => document.querySelector(s);
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const TAU = Math.PI * 2;
+  const root = document.documentElement;
+  const params = new URLSearchParams(location.search);
+
+  /* ---------- Imagens: 3 cenas × 3 formatos ----------
+     hz = linha do horizonte, sun = sol, bear = cabeça do urso (frações da imagem) */
+  const RATIOS = { '16x9': 16 / 9, '4x3': 4 / 3, '9x16': 9 / 16 };
+  const DATA = {
+    'dia': {
+      '16x9': { hz: .60, sun: [0, .274] }, '9x16': { hz: .52, sun: [0, .282] }, '4x3': { hz: .60, sun: [0, .333] },
+    },
+    'por-do-sol': {
+      '16x9': { hz: .60, sun: [.115, .385], bear: [.323, .60] },
+      '9x16': { hz: .52, sun: [.043, .411], bear: [.355, .55] },
+      '4x3':  { hz: .63, sun: [.133, .422], bear: [.317, .635] },
+    },
+    'noite': {
+      '16x9': { hz: .70, bear: [.487, .675] }, '9x16': { hz: .69, bear: [.44, .675] }, '4x3': { hz: .70, bear: [.483, .66] },
+    },
+  };
+  const SCENES = Object.keys(DATA);
+  const sceneEl = Object.fromEntries(SCENES.map(s => [s, document.querySelector(`.scene[data-s="${s}"]`)]));
+
+  /* ---------- Hora → peso de cada cena ---------- */
+  // ?hora=22 força um horário para revisar
+  const KEYS = [[0, 'noite'], [4.75, 'noite'], [5.75, 'por-do-sol'], [6.75, 'por-do-sol'], [7.75, 'dia'],
+                [16.5, 'dia'], [17.5, 'por-do-sol'], [19, 'por-do-sol'], [20, 'noite'], [24, 'noite']];
+  const ss = t => t * t * (3 - 2 * t);
+  let weight = { 'dia': 0, 'por-do-sol': 0, 'noite': 0 };
+  function hourNow() {
+    const forced = parseFloat(params.get('hora'));
+    if (!isNaN(forced)) return ((forced % 24) + 24) % 24;
+    const d = new Date(); return d.getHours() + d.getMinutes() / 60;
+  }
+  function applyTime() {
+    const h = hourNow();
+    let i = 0; while (i < KEYS.length - 2 && h >= KEYS[i + 1][0]) i++;
+    const [h0, a] = KEYS[i], [h1, b] = KEYS[i + 1];
+    const t = ss(clamp((h - h0) / (h1 - h0), 0, 1));
+    weight = { 'dia': 0, 'por-do-sol': 0, 'noite': 0 };
+    weight[a] += 1 - t; weight[b] += t;
+    for (const s of SCENES) sceneEl[s].style.opacity = weight[s].toFixed(3);
+    root.classList.toggle('light', weight['dia'] > .5);
+    root.classList.toggle('night', weight['noite'] > .5);
+    layout();
+  }
+
+  /* ---------- Layout ---------- */
+  let preloadAll = false; // as outras cenas carregam depois da primeira
+  let W = 0, H = 0, ratio = '16x9', box = { x: 0, y: 0, w: 0, h: 0 }, hzPx = 0;
+  const OVERSCAN = 1.03; // sobra mínima para a paralaxe não mostrar bordas
+  const texts = [...document.querySelectorAll('.t404')];
+  const glyphs = $('#glyphs'), phrase = $('#phrase');
+  let type = { fs: 0, cx: 0, base: 0 }, profile = new Float32Array(0); // topo das letras por coluna
+
+  function pickRatio() {
+    const a = W / H;
+    return Object.keys(RATIOS).sort((p, q) => Math.abs(Math.log(a / RATIOS[p])) - Math.abs(Math.log(a / RATIOS[q])))[0];
+  }
+  function layout() {
+    W = innerWidth; H = innerHeight;
+    const r = pickRatio();
+    ratio = r;
+    for (const s of SCENES) {
+      if (sceneEl[s].dataset.ratio === r || (weight[s] < .001 && !preloadAll)) continue;
+      const url = `assets/${s}-${r}.webp`;
+      sceneEl[s].dataset.ratio = r;
+      sceneEl[s].querySelectorAll('.pl:not(.aurora-wrap)').forEach(el => { el.style.backgroundImage = `url("${url}")`; });
+      if (s === 'noite') loadAurora(`assets/${s}-${r}-aurora.webp`);
+    }
+    const ar = RATIOS[ratio];
+    const scale = Math.max(W / ar, H) * OVERSCAN;
+    box = { w: scale * ar, h: scale };
+    box.x = (W - box.w) / 2; box.y = (H - box.h) / 2;
+    root.style.setProperty('--fx', box.x + 'px'); root.style.setProperty('--fy', box.y + 'px');
+    root.style.setProperty('--fw', box.w + 'px'); root.style.setProperty('--fh', box.h + 'px');
+    let hz = 0;
+    for (const s of SCENES) {
+      const d = DATA[s][ratio];
+      sceneEl[s].style.setProperty('--hz', d.hz * 100 + '%');
+      if (d.sun) { sceneEl[s].style.setProperty('--sunx', d.sun[0] * 100 + '%'); sceneEl[s].style.setProperty('--suny', d.sun[1] * 100 + '%'); }
+      hz += d.hz * weight[s];
+    }
+    hzPx = box.y + hz * box.h;
+    root.style.setProperty('--hzpx', hzPx + 'px');
+    layoutType();
+    resizeCanvas();
+  }
+
+  /* 404 grandão e parado, centralizado pelo desenho real das letras */
+  const FONT = fs => `700 ${fs}px 'Inter Tight', sans-serif`;
+  function inkBox(fs) { // largura e posição do desenho das letras (sem o espaçamento sobrando no fim)
+    const g = document.createElement('canvas').getContext('2d');
+    g.font = FONT(fs); g.letterSpacing = (-0.05 * fs) + 'px'; g.textAlign = 'left';
+    const m = g.measureText('404');
+    return { left: m.actualBoundingBoxLeft, width: m.actualBoundingBoxLeft + m.actualBoundingBoxRight };
+  }
+  function layoutType() {
+    const portrait = W < H;
+    const perPx = inkBox(100).width / 100;           // largura do 404 por px de fonte
+    const fs = Math.round(Math.min(W * (portrait ? .88 : .6) / perPx, H * .62));
+    const ink = inkBox(fs);
+    const capH = fs * .72;
+    const center = H * (portrait ? .4 : .44);
+    const x = (W - ink.width) / 2 + ink.left;        // início do texto para o desenho ficar no centro
+    type = { fs, x, cx: W / 2, base: Math.max(center + capH / 2, H * .05 + capH) };
+    glyphs.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    for (const t of texts) {
+      t.setAttribute('text-anchor', 'start');
+      t.setAttribute('x', x); t.setAttribute('y', type.base);
+      t.setAttribute('font-size', fs);
+    }
+    root.style.setProperty('--phrase-y', (type.base + fs * .12) + 'px');
+    measureProfile();
+  }
+  // Mede o contorno superior das letras para a neve pousar em cima delas
+  function measureProfile() {
+    const c = document.createElement('canvas'); c.width = W; c.height = Math.ceil(type.base + 4);
+    const g = c.getContext('2d');
+    g.font = FONT(type.fs);
+    g.letterSpacing = (-0.05 * type.fs) + 'px';
+    g.textAlign = 'left'; g.fillStyle = '#000';
+    g.fillText('404', type.x, type.base);
+    const data = g.getImageData(0, 0, W, c.height).data;
+    profile = new Float32Array(W).fill(Infinity);
+    for (let x = 0; x < W; x++) {
+      for (let y = 0; y < c.height; y++) if (data[(y * W + x) * 4 + 3] > 128) { profile[x] = y; break; }
+    }
+  }
+
+  /* ---------- Paralaxe (ponteiro ou giroscópio) ---------- */
+  let target = { x: 0, y: 0 }, par = { x: 0, y: 0 };
+  if (!reduce) {
+    addEventListener('pointermove', e => { target = { x: e.clientX / W * 2 - 1, y: e.clientY / H * 2 - 1 }; }, { passive: true });
+    addEventListener('deviceorientation', e => {
+      if (e.gamma == null) return;
+      target = { x: clamp(e.gamma / 25, -1, 1), y: clamp((e.beta - 45) / 25, -1, 1) };
+    });
+  }
+  const off = { sky: { x: 0, y: 0 }, ground: { x: 0, y: 0 } };
+  function updateParallax() {
+    par.x += (target.x - par.x) * .05; par.y += (target.y - par.y) * .05;
+    off.sky = { x: -par.x * 6, y: -par.y * 4 };
+    off.ground = { x: -par.x * 16, y: -par.y * 8 };
+    const set = (k, v) => root.style.setProperty(k, v.toFixed(2) + 'px');
+    set('--sx', off.sky.x); set('--sy', off.sky.y); set('--gx', off.ground.x); set('--gy', off.ground.y);
+  }
+
+  /* Ponto da imagem → tela (inclui paralaxe e o zoom lento do Ken Burns) */
+  const world = $('#world');
+  let kb = new DOMMatrix();
+  function toScreen(u, v, layer) {
+    const o = off[layer];
+    const q = kb.transformPoint(new DOMPoint(box.x + u * box.w + o.x - W * .5, box.y + v * box.h + o.y - H * .6));
+    return { x: q.x + W * .5, y: q.y + H * .6 };
+  }
+
+  /* ---------- Partículas: neve, brilhos, respiração do urso ---------- */
+  const cv = $('#fx'), ctx = cv.getContext('2d');
+  let dpr = 1, flakes = [], glints = [], vapor = [], puffs = [];
+  function resizeCanvas() {
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const count = Math.min(340, Math.round(W * H / 6500));
+    if (flakes.length !== count) flakes = Array.from({ length: count }, () => newFlake(true));
+    if (!glints.length) glints = Array.from({ length: 90 }, () => ({ u: Math.random(), v: Math.random(), p: rand(0, TAU), s: rand(.4, 1.4), k: Math.random() }));
+  }
+  function newFlake(anywhere) {
+    const z = Math.pow(Math.random(), 1.5); // mais flocos ao fundo
+    return { x: rand(-50, W + 50), y: anywhere ? rand(-H, H) : rand(-30, -5), z, r: .5 + z * 2.6, vx: 0, vy: .3 + z * 1.15, p: rand(0, TAU), settled: 0 };
+  }
+  function puff(x, y, n = 18, power = 1) {
+    for (let i = 0; i < n; i++) puffs.push({ x: x + rand(-8, 8), y, vx: rand(-2.2, 2.2) * power, vy: -rand(1.5, 4) * power, r: rand(1, 3), life: 1, floor: y });
+  }
+
+  // vento: rajadas naturais + o movimento do ponteiro
+  let gust = 0, mouse = { x: -999, y: -999 }, lastMX = null, mistX = 0;
+  addEventListener('pointermove', e => {
+    if (lastMX !== null) gust = clamp(gust + (e.clientX - lastMX) * .006, -4, 4);
+    lastMX = e.clientX; mouse = { x: e.clientX, y: e.clientY };
+  }, { passive: true });
+  document.addEventListener('pointerleave', () => { mouse = { x: -999, y: -999 }; lastMX = null; });
+
+  const mist = $('#mist');
+
+  /* Aurora: textura pequena num canvas, com faixas deslocadas em onda (leve; sem filtro SVG) */
+  const aurCv = $('#aurora'), aurCtx = aurCv.getContext('2d');
+  let aurImg = null;
+  function loadAurora(url) {
+    const img = new Image();
+    img.onload = () => { aurImg = img; aurCv.width = img.width; aurCv.height = img.height; drawAurora(0); };
+    img.src = url;
+  }
+  function drawAurora(t) {
+    if (!aurImg) return;
+    const w = aurImg.width, h = aurImg.height;
+    aurCtx.clearRect(0, 0, w, h);
+    for (let y = 0; y < h; y += 2) {
+      const dx = Math.sin(y * .018 + t * .0005) * w * .008 + Math.sin(y * .047 - t * .0009) * w * .004;
+      aurCtx.drawImage(aurImg, 0, y, w, 2, dx, y, w, 2);
+    }
+  }
+  let lastT = 0, nextBreath = 0, frameN = 0;
+
+  function frame(t) {
+    const dt = Math.min((t - lastT) / 16.67 || 1, 3); lastT = t; frameN++;
+    if (!reduce) updateParallax();
+    const tf = getComputedStyle(world).transform;
+    kb = new DOMMatrix(tf === 'none' ? undefined : tf);
+
+    gust *= Math.pow(.965, dt);
+    const wind = .3 * Math.sin(t * .00023) + .45 * Math.sin(t * .00071) * Math.sin(t * .00013) + gust;
+
+    // aurora ondulando (a cada 2 quadros, só quando a noite aparece)
+    if (!reduce && weight['noite'] > .01 && frameN % 2 === 0) drawAurora(t);
+    // neve soprada no horizonte acompanha o vento
+    mistX += (.35 + wind * .6) * dt;
+    mist.style.backgroundPosition = `${mistX.toFixed(1)}px 0`;
+
+    ctx.clearRect(0, 0, W, H);
+    const wN = weight['noite'], wS = weight['por-do-sol'], wD = weight['dia'];
+    const hzU = SCENES.reduce((a, s) => a + DATA[s][ratio].hz * weight[s], 0);
+
+    /* brilhos: neve cintilando ao sol, gelo e estrelas à noite */
+    for (const g of glints) {
+      const tw = Math.pow(Math.max(0, Math.sin(g.p + t * .001 * g.s)), 14);
+      if (tw < .02) continue;
+      let pt, color, size, a;
+      if (g.k < .35 && wN > .02) { // estrela
+        pt = toScreen(g.u, g.v * (hzU - .25), 'sky'); color = '220,240,255'; size = 2 + g.s * 2; a = tw * wN;
+      } else {
+        pt = toScreen(g.u, hzU + .03 + g.v * (.95 - hzU), 'ground');
+        color = wN > .5 ? '190,255,235' : wS > .5 ? '255,226,190' : '255,255,255';
+        size = 2.5 + g.s * 3.5; a = tw * (wD + wS * .9 + wN * .7);
+      }
+      ctx.globalAlpha = a; ctx.strokeStyle = ctx.fillStyle = `rgb(${color})`; ctx.lineWidth = .8;
+      ctx.beginPath(); ctx.moveTo(pt.x - size, pt.y); ctx.lineTo(pt.x + size, pt.y); ctx.moveTo(pt.x, pt.y - size); ctx.lineTo(pt.x, pt.y + size); ctx.stroke();
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, 1, 0, TAU); ctx.fill();
+    }
+
+    /* respiração do urso no frio (pôr do sol e noite) */
+    if (!reduce && t > nextBreath) {
+      nextBreath = t + rand(3200, 4600);
+      for (const s of ['noite', 'por-do-sol']) {
+        if (weight[s] < .1) continue;
+        const [u, v] = DATA[s][ratio].bear;
+        for (let i = 0; i < 7; i++) vapor.push({ u, v, dx: rand(-3, 3), dy: 0, r: rand(3, 6), life: 1, delay: i * 4, w: weight[s] });
+      }
+    }
+    vapor = vapor.filter(p => p.life > 0);
+    for (const p of vapor) {
+      if (p.delay > 0) { p.delay -= dt; continue; }
+      p.dy -= .35 * dt; p.dx += (wind * .25 + rand(-.1, .1)) * dt; p.r += .25 * dt; p.life -= .012 * dt;
+      const b = toScreen(p.u, p.v, 'ground');
+      const x = b.x + p.dx, y = b.y + p.dy;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, p.r);
+      g.addColorStop(0, `rgba(255,255,255,${.22 * p.life * p.w})`); g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.globalAlpha = 1; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, p.r, 0, TAU); ctx.fill();
+    }
+
+    /* neve caindo */
+    ctx.fillStyle = '#fff';
+    for (const f of flakes) {
+      if (f.settled) {
+        f.settled -= (f.onType ? .0018 : .006) * dt;
+        if (f.settled <= 0) Object.assign(f, newFlake(false));
+        ctx.globalAlpha = Math.max(0, f.settled) * (.55 + f.z * .45);
+        ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, TAU); ctx.fill();
+        continue;
+      }
+      f.vx += (wind * (.35 + f.z) + Math.sin(f.p + t * .0014) * .3 - f.vx) * .05;
+      if (f.z > .45) { // o ponteiro abre caminho na neve mais próxima
+        const dx = f.x - mouse.x, dy = f.y - mouse.y, d2 = dx * dx + dy * dy;
+        if (d2 < 6400) { const d = Math.sqrt(d2) || 1; f.vx += dx / d * .5; f.y += dy / d * .3; }
+      }
+      const prevY = f.y;
+      f.x += f.vx * dt; f.y += f.vy * dt;
+      if (f.x < -60) f.x = W + 50; else if (f.x > W + 60) f.x = -50;
+      // pousa em cima das letras do 404 (só os flocos mais próximos, que estão "na frente")
+      const col = Math.round(f.x);
+      const topY = f.z > .4 && col >= 0 && col < W ? profile[col] : Infinity;
+      if (topY !== Infinity && prevY < topY && f.y >= topY) {
+        f.y = topY - f.r * .4; f.settled = 1; f.onType = true;
+      } else {
+        // perspectiva: flocos distantes pousam perto do horizonte, os próximos lá embaixo
+        const land = hzPx + (H - hzPx) * (.06 + .94 * Math.pow(f.z, .8));
+        if (f.y >= land) { f.y = land; f.settled = 1; f.onType = false; }
+      }
+      ctx.globalAlpha = .3 + f.z * .6;
+      ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, TAU); ctx.fill();
+    }
+
+    /* punhados de neve (cliques) */
+    puffs = puffs.filter(p => p.life > 0);
+    for (const p of puffs) {
+      p.vy += .14 * dt; p.vx *= .98; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= .018 * dt;
+      if (p.y > p.floor + 4) { p.y = p.floor + 4; p.vy *= -.2; p.vx *= .6; }
+      ctx.globalAlpha = Math.max(0, p.life) * .9;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  let raf = 0;
+  const loop = t => { frame(t); raf = requestAnimationFrame(loop); };
+  const start = () => { cancelAnimationFrame(raf); if (reduce) frame(0); else raf = requestAnimationFrame(loop); };
+  document.addEventListener('visibilitychange', () => document.hidden ? cancelAnimationFrame(raf) : start());
+
+  addEventListener('pointerdown', e => puff(e.clientX, e.clientY, 18, e.clientY > hzPx ? 1 : .5));
+
+  /* ---------- Início ---------- */
+  W = innerWidth; H = innerHeight;
+  applyTime();
+  setInterval(applyTime, 30000);
+  addEventListener('resize', layout);
+  document.fonts?.ready.then(layoutType); // remede quando a Inter Tight carregar
+  addEventListener('load', () => setTimeout(() => { preloadAll = true; layout(); }, 1500));
+  start();
+})();
+</script>
+</body>
+</html>
